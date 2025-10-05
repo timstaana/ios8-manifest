@@ -26,14 +26,14 @@ canvas{display:block;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
 
 <script>
-let overlay;
-
 function setup() {
+  // Use WEBGL renderer for 3D
   createCanvas(windowWidth, windowHeight, WEBGL);
 
-  // Create a separate 2D overlay
-  overlay = createGraphics(windowWidth, windowHeight);
-  overlay.clear(); // Make it transparent
+  // Prevent default touch behavior (scrolling/bounce)
+  document.body.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+  }, { passive: false });
 
   noStroke();
 }
@@ -41,31 +41,21 @@ function setup() {
 function draw() {
   background(20, 20, 40);
 
-  // 3D box
+  // Set up some lighting
   directionalLight(255, 255, 255, 0.25, 0.25, -1);
   ambientLight(60);
+
+  // Rotate based on time and touch
   rotateX(frameCount * 0.01 + (mouseY - height/2) * 0.002);
   rotateY(frameCount * 0.01 + (mouseX - width/2) * 0.002);
+
+  // Color and box
   normalMaterial();
   box(min(width, height) / 3);
-
-  // Draw the 2D circle on overlay
-  overlay.clear();
-  overlay.fill(255, 100, 100);
-  overlay.noStroke();
-  overlay.ellipse(mouseX, mouseY, 40, 40);
-
-  // Render overlay on top
-  push();
-  resetMatrix(); // Ignore WEBGL transformations
-  imageMode(CORNER);
-  image(overlay, -width/2, -height/2);
-  pop();
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  overlay.resizeCanvas(windowWidth, windowHeight);
 }
 </script>
 </head>
