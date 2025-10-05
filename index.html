@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Camera Test</title>
+<meta name="apple-mobile-web-app-title" content="p5 Camera Cube">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="icon" href="favicon.png" />
+<title>Camera Cube</title>
 <style>
 html,body{
   margin:0;
@@ -15,33 +18,77 @@ html,body{
   overflow:hidden;
   background:#111;
 }
-canvas, video{
-  display:block;
-}
+canvas{display:block;}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
 
 <script>
-let cam;
+let rotX = 0, rotY = 0;
+let rotVX = 0, rotVY = 0; // velocities for momentum
+let lastX = 0, lastY = 0;
+let dragging = false;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  
-  // Stop scrolling on touch
-  document.body.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
+  createCanvas(windowWidth, windowHeight, WEBGL);
 
-  // Start camera
-  cam = createCapture(VIDEO);
-  cam.size(width, height);
-  cam.hide(); // hide HTML video element
+  // Prevent scrolling on touch
+  document.body.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
 }
 
 function draw() {
-  background(0);
-  
-  // Draw camera feed on canvas
-  image(cam, 0, 0, width, height);
+  background(30);
+
+  // Apply momentum if not dragging
+  if(!dragging){
+    rotX += rotVX;
+    rotY += rotVY;
+
+    // friction
+    rotVX *= 0.95;
+    rotVY *= 0.95;
+  }
+
+  // Lighting
+  ambientLight(100);
+  directionalLight(255, 255, 255, 0.25, 0.25, -1);
+
+  // Apply rotation
+  rotateX(rotX);
+  rotateY(rotY);
+
+  // Cube
+  normalMaterial();
+  box(min(width, height)/3);
+}
+
+// --- Touch drag handling ---
+function touchStarted() {
+  lastX = mouseX;
+  lastY = mouseY;
+  dragging = true;
+}
+
+function touchMoved() {
+  if(dragging){
+    let dx = mouseX - lastX;
+    let dy = mouseY - lastY;
+
+    rotY += dx * 0.01;
+    rotX += dy * 0.01;
+
+    // store velocity for momentum
+    rotVY = dx * 0.01;
+    rotVX = dy * 0.01;
+
+    lastX = mouseX;
+    lastY = mouseY;
+  }
+  return false; // prevent scrolling
+}
+
+function touchEnded() {
+  dragging = false;
 }
 
 function windowResized() {
