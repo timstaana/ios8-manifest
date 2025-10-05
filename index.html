@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="p5 Test">
+<meta name="apple-mobile-web-app-title" content="p5 Camera Cube">
 <link rel="apple-touch-icon" href="favicon.png">
 <link rel="icon" href="favicon.png" />
-<title>p5.js 3D Box Test</title>
+<title>Camera Cube</title>
 <style>
 html,body{
   margin:0;
@@ -21,40 +21,83 @@ html,body{
 canvas{display:block;}
 </style>
 
-<!-- p5.js libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
 
 <script>
+let cam;
+let rotX = 0, rotY = 0;
+let rotVX = 0, rotVY = 0; // velocities for momentum
+let lastX = 0, lastY = 0;
+let dragging = false;
+
 function setup() {
-  // Use WEBGL renderer for 3D
   createCanvas(windowWidth, windowHeight, WEBGL);
 
-  // Prevent default touch behavior (scrolling/bounce)
-  document.body.addEventListener('touchmove', function(e) {
-    e.preventDefault();
-  }, { passive: false });
+  // Stop scrolling on touch
+  document.body.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
 
-  noStroke();
+  // Start camera
+  cam = createCapture(VIDEO);
+  cam.size(320, 240);
+  cam.hide();
 }
 
 function draw() {
-  background(20, 20, 40);
+  background(0);
 
-  // Set up some lighting
+  // Apply momentum rotation
+  if(!dragging){
+    rotX += rotVX;
+    rotY += rotVY;
+    // friction / damping
+    rotVX *= 0.95;
+    rotVY *= 0.95;
+  }
+
+  // Lighting
+  ambientLight(100);
   directionalLight(255, 255, 255, 0.25, 0.25, -1);
-  ambientLight(60);
 
-  // Rotate based on time and touch
-  rotateX(frameCount * 0.01 + (mouseY - height/2) * 0.002);
-  rotateY(frameCount * 0.01 + (mouseX - width/2) * 0.002);
+  // Apply rotation
+  rotateX(rotX);
+  rotateY(rotY);
 
-  // Color and box
-  normalMaterial();
-  box(min(width, height) / 3);
+  // Camera texture cube
+  texture(cam);
+  box(min(width, height)/2);
 }
 
-function windowResized() {
+// --- Touch / drag ---
+function touchStarted() {
+  lastX = mouseX;
+  lastY = mouseY;
+  dragging = true;
+}
+
+function touchMoved() {
+  if(dragging){
+    let dx = mouseX - lastX;
+    let dy = mouseY - lastY;
+
+    rotY += dx * 0.01;
+    rotX += dy * 0.01;
+
+    // update velocities for momentum
+    rotVY = dx * 0.01;
+    rotVX = dy * 0.01;
+
+    lastX = mouseX;
+    lastY = mouseY;
+  }
+  return false; // prevent scrolling
+}
+
+function touchEnded() {
+  dragging = false;
+}
+
+function windowResized(){
   resizeCanvas(windowWidth, windowHeight);
 }
 </script>
