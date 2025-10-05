@@ -45,13 +45,22 @@ function draw() {
   directionalLight(255, 255, 255, 0.25, 0.25, -1);
   ambientLight(60);
 
-  // Rotate based on time and touch
+  // Rotate based on time and mouse
   rotateX(frameCount * 0.01 + (mouseY - height/2) * 0.002);
   rotateY(frameCount * 0.01 + (mouseX - width/2) * 0.002);
 
   // Color and box
   normalMaterial();
   box(min(width, height) / 3);
+
+  // Draw a circle at mouse position
+  push(); // Save current transformations
+  noStroke();
+  fill(255, 100, 100);
+  // Convert mouse coordinates to WEBGL center coordinates
+  translate(mouseX - width / 2, mouseY - height / 2, 0);
+  sphere(20); // 3D sphere
+  pop(); // Restore transformations
 }
 
 function windowResized() {
