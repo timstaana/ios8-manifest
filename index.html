@@ -10,82 +10,70 @@
 <link rel="icon" href="favicon.png" />
 <title>p5.js 3D Box Test</title>
 <style>
-html,body{
-  margin:0;
-  padding:0;
-  width:100vw;
-  height:100vh;
-  overflow:hidden;
-  background:#111;
-}
+html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background:#111;}
 canvas{display:block;}
 </style>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
-
 <script>
-let rotX = 0, rotY = 0;      // current rotation
-let rotVX = 0, rotVY = 0;    // rotation velocity for momentum
+let rotX = 0, rotY = 0;
+let rotVX = 0, rotVY = 0;
 let lastX = 0, lastY = 0;
 let dragging = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
-
-  // Stop scrolling on touch
-  document.body.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive:false});
-
   noStroke();
+
+  // prevent scrolling
+  document.body.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
 }
 
 function draw() {
-  background(20, 20, 40);
+  background(20,20,40);
 
-  // Lighting
-  directionalLight(255, 255, 255, 0.25, 0.25, -1);
-  ambientLight(60);
-
-  // Apply momentum if not dragging
+  // Apply momentum
   if(!dragging){
     rotX += rotVX;
     rotY += rotVY;
-    
-    // friction
     rotVX *= 0.95;
     rotVY *= 0.95;
   }
+
+  // Lighting
+  ambientLight(100);
+  directionalLight(255,255,255,0.25,0.25,-1);
 
   // Apply rotation
   rotateX(rotX);
   rotateY(rotY);
 
-  // Draw cube
   normalMaterial();
-  box(min(width, height)/3);
+  box(min(width,height)/3);
 }
 
-// --- Touch drag ---
+// --- Touch drag handling ---
 function touchStarted() {
-  lastX = mouseX;
-  lastY = mouseY;
-  dragging = true;
+  if(touches.length > 0){
+    lastX = touches[0].x;
+    lastY = touches[0].y;
+    dragging = true;
+  }
 }
 
 function touchMoved() {
-  if(dragging){
-    let dx = mouseX - lastX;
-    let dy = mouseY - lastY;
+  if(dragging && touches.length > 0){
+    let dx = touches[0].x - lastX;
+    let dy = touches[0].y - lastY;
 
     rotY += dx * 0.01;
     rotX += dy * 0.01;
 
-    // update velocity for momentum
+    // update momentum
     rotVY = dx * 0.01;
     rotVX = dy * 0.01;
 
-    lastX = mouseX;
-    lastY = mouseY;
+    lastX = touches[0].x;
+    lastY = touches[0].y;
   }
   return false; // prevent scrolling
 }
