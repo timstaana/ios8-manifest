@@ -30,7 +30,7 @@ let lastX = 0, lastY = 0;
 let dragging = false;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight, WEBGL);
+  createCanvas(windowWidth, windowHeight);
 
   // Prevent scrolling on touch
   document.body.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
