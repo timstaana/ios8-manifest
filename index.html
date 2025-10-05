@@ -21,19 +21,20 @@ html,body{
 canvas{display:block;}
 </style>
 
-<!-- p5.js libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
 
 <script>
+let rotX = 0, rotY = 0;      // current rotation
+let rotVX = 0, rotVY = 0;    // rotation velocity for momentum
+let lastX = 0, lastY = 0;
+let dragging = false;
+
 function setup() {
-  // Use WEBGL renderer for 3D
   createCanvas(windowWidth, windowHeight, WEBGL);
 
-  // Prevent default touch behavior (scrolling/bounce)
-  document.body.addEventListener('touchmove', function(e) {
-    e.preventDefault();
-  }, { passive: false });
+  // Stop scrolling on touch
+  document.body.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive:false});
 
   noStroke();
 }
@@ -41,17 +42,56 @@ function setup() {
 function draw() {
   background(20, 20, 40);
 
-  // Set up some lighting
+  // Lighting
   directionalLight(255, 255, 255, 0.25, 0.25, -1);
   ambientLight(60);
 
-  // Rotate based on time and touch
-  rotateX(frameCount * 0.01 + (mouseY - height/2) * 0.002);
-  rotateY(frameCount * 0.01 + (mouseX - width/2) * 0.002);
+  // Apply momentum if not dragging
+  if(!dragging){
+    rotX += rotVX;
+    rotY += rotVY;
+    
+    // friction
+    rotVX *= 0.95;
+    rotVY *= 0.95;
+  }
 
-  // Color and box
+  // Apply rotation
+  rotateX(rotX);
+  rotateY(rotY);
+
+  // Draw cube
   normalMaterial();
-  box(min(width, height) / 3);
+  box(min(width, height)/3);
+}
+
+// --- Touch drag ---
+function touchStarted() {
+  lastX = mouseX;
+  lastY = mouseY;
+  dragging = true;
+}
+
+function touchMoved() {
+  if(dragging){
+    let dx = mouseX - lastX;
+    let dy = mouseY - lastY;
+
+    rotY += dx * 0.01;
+    rotX += dy * 0.01;
+
+    // update velocity for momentum
+    rotVY = dx * 0.01;
+    rotVX = dy * 0.01;
+
+    lastX = mouseX;
+    lastY = mouseY;
+  }
+  return false; // prevent scrolling
+}
+
+function touchEnded() {
+  dragging = false;
 }
 
 function windowResized() {
