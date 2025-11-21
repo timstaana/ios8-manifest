@@ -1,63 +1,316 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="p5 Test">
-<link rel="apple-touch-icon" href="favicon.png">
-<link rel="icon" href="favicon.png" />
-<title>p5.js 3D Box Test</title>
-<style>
-html,body{
-  margin:0;
-  padding:0;
-  width:100vw;
-  height:100vh;
-  overflow:hidden;
-  background:#111;
-}
-canvas{display:block;}
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-<!-- p5.js libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <title>Cherry Tamagotchi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.1/p5.min.js"></script>
 
-<script>
-function setup() {
-  // Use WEBGL renderer for 3D
-  createCanvas(windowWidth, windowHeight, WEBGL);
-
-  // Prevent default touch behavior (scrolling/bounce)
-  document.body.addEventListener('touchmove', function(e) {
-    e.preventDefault();
-  }, { passive: false });
-
-  noStroke();
-}
-
-function draw() {
-  background(20, 20, 40);
-
-  // Set up some lighting
-  directionalLight(255, 255, 255, 0.25, 0.25, -1);
-  ambientLight(60);
-
-  // Rotate based on time and touch
-  rotateX(frameCount * 0.01 + (mouseY - height/2) * 0.002);
-  rotateY(frameCount * 0.01 + (mouseX - width/2) * 0.002);
-
-  // Color and box
-  normalMaterial();
-  box(min(width, height) / 3);
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
-</script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #222;
+            height: 1024px;
+            width: 768px;
+        }
+    </style>
 </head>
-<body></body>
+
+<body>
+    <script>
+        var cherry, button1, button2, button3;
+        var DRAG_DEADZONE = 200;
+
+        var animations = {}; // store frames for each state
+
+        function preload() {
+            animations.idle = [];
+            animations.move = [];
+            animations.mouseover = [];
+            animations.drag = [];
+            animations.eating = [];
+
+            // Idle frames
+            for (var i = 0; i < 1; i++) animations.idle[i] = loadImage("images/idle_" + i + ".png");
+
+            // Moving frames
+            for (var i = 0; i < 1; i++) animations.move[i] = loadImage("images/move_" + i + ".png");
+
+            // Mouseover frames
+            for (var i = 0; i < 1; i++) animations.mouseover[i] = loadImage("images/mouseover_" + i + ".png");
+
+            // Drag frames
+            for (var i = 0; i < 1; i++) animations.drag[i] = loadImage("images/drag_" + i + ".png");
+
+            // Eating frames (state 4)
+            for (var i = 0; i < 1; i++) animations.eating[i] = loadImage("images/eating_" + i + ".png");
+        }
+
+        // --- CHERRY OBJECT ---
+        function Cherry(x, y) {
+            this.x = x || width / 2;
+            this.y = y || height / 2;
+            this.w = 300;
+            this.h = 300;
+            this.state = 0; // 0=idle,1=move,2=mouseover,3=drag,4=eating
+            this.speed = 2;
+            this.targetX = this.x;
+            this.targetY = this.y;
+            this.waitTime = 0;
+            this.waitTimer = 0;
+            this.pressX = 0;
+            this.pressY = 0;
+            this.pressStartedOnCherry = false;
+
+            // Animation
+            this.frameIndex = 0;
+            this.frameCounter = 0;
+            this.frameSpeed = 5; // frames per update
+
+            // Draw current frame
+            this.draw = function () {
+                var anim;
+                switch (this.state) {
+                    case 0: anim = animations.idle; break;
+                    case 1: anim = animations.move; break;
+                    case 2: anim = animations.mouseover; break;
+                    case 3: anim = animations.drag; break;
+                    case 4: anim = animations.eating; break;
+                }
+                if (anim && anim.length > 0) {
+                    push();
+                    translate(this.x, this.y);
+                    if (this.targetX < this.x) scale(-1, 1);
+                    image(anim[this.frameIndex], - anim[0].width / 2, - anim[0].height / 2);
+                    pop();
+                    this.frameCounter++;
+                    if (this.frameCounter >= this.frameSpeed) {
+                        this.frameCounter = 0;
+                        this.frameIndex = (this.frameIndex + 1) % anim.length;
+                    }
+
+                }
+            };
+            this.update = function () {
+                switch (this.state) {
+                    case 0: // waiting
+                        if (this.waitTime === 0) this.waitTime = Math.floor(random(60, 300));
+                        this.waitTimer++;
+                        if (this.waitTimer >= this.waitTime) {
+                            this.state = 1;
+                            this.targetX = constrain(this.x + random(-this.w / 2, this.w / 2), this.w / 2, width - this.w / 2);
+                            this.targetY = constrain(this.y + random(-this.h / 2, this.h / 2), this.h / 2, height - this.h / 2 - 300);
+                        }
+                        break;
+
+                    case 1: // moving
+                        var dx = this.targetX - this.x;
+                        var dy = this.targetY - this.y;
+                        var distToTarget = sqrt(dx * dx + dy * dy);
+                        if (distToTarget < this.speed) {
+                            this.x = this.targetX;
+                            this.y = this.targetY;
+                            this.state = 0;
+                            this.waitTime = 0;
+                            this.waitTimer = 0;
+                        } else {
+                            this.x += (dx / distToTarget) * this.speed;
+                            this.y += (dy / distToTarget) * this.speed;
+                        }
+                        break;
+
+                    case 2: // mouse over
+                        if (!this.pressStartedOnCherry) this.state = 0;
+                        break;
+
+                    case 3: // dragging
+                        this.x = constrain(mouseX, this.w / 2, width - this.w / 2);
+                        this.y = constrain(mouseY + this.h / 2, this.h / 2, height - this.h / 2);
+                        button1.isInUse = false;
+                        button2.isInUse = false;
+                        button3.isInUse = false;
+                        break;
+
+                    case 4: // eating
+                        this.waitTimer++;
+                        if (this.waitTimer >= this.waitTime) {
+                            this.state = 0;
+                            button1.isInUse = false;
+                            button2.isInUse = false;
+                            button3.isInUse = false;
+                        }
+                        break;
+                }
+            };
+
+            this.isMouseOver = function (mx, my) {
+                return dist(mx, my, this.x, this.y) <= this.h / 2;
+            };
+
+            this.handlePress = function (mx, my) {
+                if (this.isMouseOver(mx, my)) {
+                    this.pressX = mx;
+                    this.pressY = my;
+                    this.pressStartedOnCherry = true;
+                    this.waitTime = Math.floor(random(60, 120)); // short delay after drag
+                    this.waitTimer = 0;
+                    this.state = 2; // mouse over
+                } else {
+                    this.pressStartedOnCherry = false;
+                }
+            };
+
+            this.handleDrag = function (mx, my) {
+                if (this.state !== 2) return;
+                if (dist(mx, my, this.pressX, this.pressY) >= DRAG_DEADZONE) {
+                    this.state = 3;
+                }
+            };
+
+            this.handleRelease = function () {
+                if (this.state === 3) {
+                    this.state = 0;
+                    this.waitTime = Math.floor(random(60, 120));
+                    this.waitTimer = 0;
+                    this.y = constrain(this.y + 50, this.h / 2, height - this.h / 2 - 300);
+                }
+                this.pressStartedOnCherry = false;
+            };
+
+            // move cherry to a target position (e.g. button)
+            this.moveTo = function (tx, ty) {
+                this.targetX = tx;
+                this.targetY = ty;
+                this.state = 4;
+            };
+        }
+
+        // --- BUTTON OBJECT ---
+        function Button(x, y) {
+            this.origX = x;
+            this.origY = y;
+            this.x = x;
+            this.y = y;
+            this.w = 200;
+            this.h = 200;
+            this.isDragging = false;
+            this.pressX = 0;
+            this.pressY = 0;
+            this.pressStartedOnButton = false;
+            this.isInUse = false;
+
+            this.draw = function () {
+                if (this.isInUse) {
+                    fill(25, 100, 25);
+                } else {
+                    fill(50, 200, 50);
+                }
+
+                noStroke();
+                rect(this.x - this.w / 2, this.y - this.h / 2, this.w, this.h);
+            };
+
+            this.isMouseOver = function (mx, my) {
+                return mx >= this.x - this.w / 2 && mx <= this.x + this.w / 2 &&
+                    my >= this.y - this.h / 2 && my <= this.y + this.h / 2;
+            };
+
+            this.handlePress = function (mx, my) {
+                if (this.isMouseOver(mx, my)) {
+                    this.pressX = mx;
+                    this.pressY = my;
+                    this.pressStartedOnButton = true;
+                    this.isDragging = false;
+                } else {
+                    this.pressStartedOnButton = false;
+                }
+            };
+
+            this.handleDrag = function (mx, my) {
+                if (!this.pressStartedOnButton) return;
+                if (this.isInUse) return;
+                this.isDragging = true;
+                this.x = mx;
+                this.y = my;
+            };
+
+            this.handleRelease = function () {
+                if (this.isDragging) {
+
+                    // distance from button to cherry
+                    var d = dist(this.x, this.y, cherry.x, cherry.y);
+
+                    // if dropped near cherry
+                    if (d < 100) {
+                        cherry.waitTimer = 0;
+                        cherry.waitTime = 300;
+                        cherry.state = 4;
+                        this.isInUse = true;
+                    }
+
+                    this.resetPosition();
+                }
+                this.isDragging = false;
+                this.pressStartedOnButton = false;
+            };
+
+            this.resetPosition = function () {
+                this.x = this.origX;
+                this.y = this.origY;
+                this.isDragging = false;
+                this.pressStartedOnButton = false;
+            };
+        }
+
+        function setup() {
+            createCanvas(768, 1024);
+            cherry = new Cherry(width / 2, height / 2.5);
+            button1 = new Button(width / 5, height - 150);
+            button2 = new Button(width / 2, height - 150);
+            button3 = new Button(width / 1.25, height - 150);
+        }
+
+        function draw() {
+            background(20);
+            cherry.update();
+            if (cherry.state != 3) { cherry.draw(); }
+            button1.draw();
+            button2.draw();
+            button3.draw();
+
+            if (cherry.state == 3) { cherry.draw(); }
+        }
+
+        function mousePressed() {
+            cherry.handlePress(mouseX, mouseY);
+            button1.handlePress(mouseX, mouseY);
+            button2.handlePress(mouseX, mouseY);
+            button3.handlePress(mouseX, mouseY);
+        }
+        function mouseDragged() {
+            cherry.handleDrag(mouseX, mouseY);
+            button1.handleDrag(mouseX, mouseY);
+            button2.handleDrag(mouseX, mouseY);
+            button3.handleDrag(mouseX, mouseY);
+        }
+        function mouseReleased() {
+            cherry.handleRelease();
+            button1.handleRelease();
+            button2.handleRelease();
+            button3.handleRelease();
+        }
+
+        // Prevent iOS scrolling
+        document.addEventListener("touchstart", function (e) { e.preventDefault(); }, {passive: false});
+        document.addEventListener("touchmove", function (e) { e.preventDefault(); }, {passive: false});
+    </script>
+</body>
+
 </html>
