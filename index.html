@@ -29,6 +29,7 @@
         var DRAG_DEADZONE = 200;
 
         var animations = {}; // store frames for each state
+        var buttonImages = [];
         var frameCounts = {
             idle: 1,
             move: 2,
@@ -51,6 +52,10 @@
             animations.mouseover = loadSequence("mouseover", frameCounts.mouseover);
             animations.drag = loadSequence("drag", frameCounts.drag);
             animations.eating = loadSequence("eating", frameCounts.eating);
+
+            buttonImages[0] = loadImage("images/button_1.png");
+            buttonImages[1] = loadImage("images/button_2.png");
+            buttonImages[2] = loadImage("images/button_3.png");
         }
 
         // --- CHERRY OBJECT ---
@@ -200,13 +205,14 @@
         }
 
         // --- BUTTON OBJECT ---
-        function Button(x, y) {
+        function Button(x, y, img) {
             this.origX = x;
             this.origY = y;
             this.x = x;
             this.y = y;
             this.w = 200;
             this.h = 200;
+            this.img = img;
             this.isDragging = false;
             this.pressX = 0;
             this.pressY = 0;
@@ -214,14 +220,20 @@
             this.isInUse = false;
 
             this.draw = function () {
-                if (this.isInUse) {
-                    fill(25, 100, 25);
+                if (this.img) {
+                    push();
+                    imageMode(CENTER);
+                    image(this.img, this.x, this.y, this.w, this.h);
+                    pop();
                 } else {
-                    fill(50, 200, 50);
+                    if (this.isInUse) {
+                        fill(25, 100, 25);
+                    } else {
+                        fill(50, 200, 50);
+                    }
+                    noStroke();
+                    rect(this.x - this.w / 2, this.y - this.h / 2, this.w, this.h);
                 }
-
-                noStroke();
-                rect(this.x - this.w / 2, this.y - this.h / 2, this.w, this.h);
             };
 
             this.isMouseOver = function (mx, my) {
@@ -279,9 +291,9 @@
         function setup() {
             createCanvas(768, 1024);
             cherry = new Cherry(width / 2, height / 2.5);
-            button1 = new Button(width / 5, height - 150);
-            button2 = new Button(width / 2, height - 150);
-            button3 = new Button(width / 1.25, height - 150);
+            button1 = new Button(width / 5, height - 150, buttonImages[0]);
+            button2 = new Button(width / 2, height - 150, buttonImages[1]);
+            button3 = new Button(width / 1.25, height - 150, buttonImages[2]);
         }
 
         function draw() {
