@@ -31,11 +31,11 @@
         var animations = {}; // store frames for each state
         var buttonImages = [];
         var frameCounts = {
-            idle: 1,
+            idle: 4,
             move: 2,
-            mouseover: 1,
-            drag: 1,
-            eating: 1
+            mouseover: 2,
+            drag: 2,
+            eating: 2
         };
 
         function loadSequence(name, count) {
@@ -297,7 +297,7 @@
         }
 
         function draw() {
-            background(20);
+            background(170);
             cherry.update();
             if (cherry.state != 3) { cherry.draw(); }
             button1.draw();
