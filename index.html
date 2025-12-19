@@ -29,28 +29,28 @@
         var DRAG_DEADZONE = 200;
 
         var animations = {}; // store frames for each state
+        var frameCounts = {
+            idle: 1,
+            move: 2,
+            mouseover: 1,
+            drag: 1,
+            eating: 1
+        };
+
+        function loadSequence(name, count) {
+            var frames = [];
+            for (var i = 0; i < count; i++) {
+                frames.push(loadImage("images/" + name + "_" + i + ".png"));
+            }
+            return frames;
+        }
 
         function preload() {
-            animations.idle = [];
-            animations.move = [];
-            animations.mouseover = [];
-            animations.drag = [];
-            animations.eating = [];
-
-            // Idle frames
-            for (var i = 0; i < 1; i++) animations.idle[i] = loadImage("images/idle_" + i + ".png");
-
-            // Moving frames
-            for (var i = 0; i < 1; i++) animations.move[i] = loadImage("images/move_" + i + ".png");
-
-            // Mouseover frames
-            for (var i = 0; i < 1; i++) animations.mouseover[i] = loadImage("images/mouseover_" + i + ".png");
-
-            // Drag frames
-            for (var i = 0; i < 1; i++) animations.drag[i] = loadImage("images/drag_" + i + ".png");
-
-            // Eating frames (state 4)
-            for (var i = 0; i < 1; i++) animations.eating[i] = loadImage("images/eating_" + i + ".png");
+            animations.idle = loadSequence("idle", frameCounts.idle);
+            animations.move = loadSequence("move", frameCounts.move);
+            animations.mouseover = loadSequence("mouseover", frameCounts.mouseover);
+            animations.drag = loadSequence("drag", frameCounts.drag);
+            animations.eating = loadSequence("eating", frameCounts.eating);
         }
 
         // --- CHERRY OBJECT ---
@@ -73,6 +73,7 @@
             this.frameIndex = 0;
             this.frameCounter = 0;
             this.frameSpeed = 5; // frames per update
+            this.lastState = this.state;
 
             // Draw current frame
             this.draw = function () {
@@ -84,7 +85,13 @@
                     case 3: anim = animations.drag; break;
                     case 4: anim = animations.eating; break;
                 }
+                if (this.state !== this.lastState) {
+                    this.frameIndex = 0;
+                    this.frameCounter = 0;
+                    this.lastState = this.state;
+                }
                 if (anim && anim.length > 0) {
+                    if (this.frameIndex >= anim.length) this.frameIndex = 0;
                     push();
                     translate(this.x, this.y);
                     if (this.targetX < this.x) scale(-1, 1);
