@@ -1,0 +1,9 @@
+{
+  "name": "Garden",
+  "shortName": "Garden",
+  "id": "com.timstaana.garden",
+  "background": "#f4efe6",
+  "devPort": 8080,
+  "prodUrl": "https://timstaana.github.io/ios8-manifest/",
+  "offline": true
+}

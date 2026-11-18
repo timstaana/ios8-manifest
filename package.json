@@ -1,0 +1,23 @@
+{
+  "name": "ipad-app-template",
+  "private": true,
+  "type": "module",
+  "description": "Skeleton for full-screen home-screen apps on the iOS 8 iPad minis (IPAD-01..05)",
+  "scripts": {
+    "dev": "node tools/dev.mjs",
+    "build": "node tools/build.mjs",
+    "serve": "node tools/dev.mjs --static",
+    "icons": "node tools/icons.mjs",
+    "ipad:open": "node tools/ipad.mjs open",
+    "ipad:install": "node tools/ipad.mjs install",
+    "ipad:remove": "node tools/ipad.mjs remove"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.13",
+    "@babel/preset-env": "^7.29.14",
+    "acorn": "^8.19.0",
+    "core-js-bundle": "^3.51.0",
+    "esbuild": "^0.25.12",
+    "terser": "^5.51.2"
+  }
+}
