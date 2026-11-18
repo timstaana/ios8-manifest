@@ -1,0 +1,10 @@
+{
+  "name": "iPad Showcase",
+  "shortName": "Showcase",
+  "id": "com.timstaana.showcase",
+  "background": "#fafafa",
+  "statusBar": "dim",
+  "devPort": 8080,
+  "prodUrl": "https://timstaana.github.io/ios8-manifest/",
+  "offline": true
+}

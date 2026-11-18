@@ -4,18 +4,18 @@
 //   npm run ipad:install -- --profile [URL]  same through a configuration profile (tap Install; no jailbreak needed,
 //                                            but iOS then shows a white status bar instead of the see-through one)
 //   npm run ipad:remove                      take it off the home screen again
-// URL defaults to the dev server on this laptop; use --prod for app.config.json "prodUrl".
+// URL defaults to the dev server on this laptop; use --prod for app.config.json "prodUrl". Add --app apps/starter for another app.
 import { execFileSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { config, ROOT } from './build.mjs';
+import { appArgs, appConfig } from './app.mjs';
 import { lanAddress } from './dev-address.mjs';
 
-const args = process.argv.slice(2), cmd = args.shift();
+const { appDir: ROOT, rest: args } = appArgs(); const cmd = args.shift(); // ROOT = the app's folder here
 const viaProfile = args[0] === '--profile' && args.shift();
-const cfg = config();
+const cfg = appConfig(ROOT);
 const url = args[0] === '--prod' ? cfg.prodUrl : args[0] || `http://${lanAddress()}:${cfg.devPort || 8080}/`;
 if (!url) { console.error('No URL: set "prodUrl" in app.config.json or pass one.'); process.exit(1); }
 const env = { ...process.env, OPENSSL_CONF: join(homedir(), '.config/ipad-legacy/openssl.cnf') }; // iOS 8 needs old TLS for USB services
@@ -31,11 +31,9 @@ const label = cfg.shortName || cfg.name;
 const clipId = createHash('sha1').update(cfg.id).digest('hex').slice(0, 32).toUpperCase();
 const CLIPS = '/var/mobile/Library/WebClips';
 
-/** The status bar style the page asks for, in the form iOS stores for a home-screen app. */
-function statusBarStyle() {
-  const m = /apple-mobile-web-app-status-bar-style"\s+content="([^"]+)"/.exec(readFileSync(join(ROOT, 'public/index.html'), 'utf8'));
-  return { 'black-translucent': 'UIStatusBarStyleLightContent', black: 'UIStatusBarStyleLightContent' }[m && m[1]] || 'UIStatusBarStyleDefault';
-}
+// Status bar: white text over the page, always (iOS 8 web apps can't have dark text). app.config.json "statusBar"
+// picks what the engine paints behind it ("black", "dim" or "overlay"); see safeTop()/statusBarFill() in page.ts.
+function statusBarStyle() { return 'UIStatusBarStyleLightContent'; }
 
 function installDirect() {
   // Writes the same web clip folder Safari's "Add to Home Screen" makes (checked against one on IPAD-02).
@@ -86,10 +84,21 @@ if (cmd === 'open') {
   console.log(`Opened ${url} in Safari (the iPad must be unlocked).`);
 } else if (cmd === 'install') {
   viaProfile ? installProfile() : installDirect();
+} else if (cmd === 'shot') {
+  // Screenshot over USB. iOS 8's screenshot service needs the iOS 8.4 Developer Disk Image mounted once per iPad boot:
+  // put DeveloperDiskImage.dmg + .signature (from an old Xcode's DeviceSupport/8.4) in $IPAD_DDI or ~/.local/share/ipad-ddi.
+  const out = args[0] && !args[0].startsWith('http') ? args[0] : 'ipad-shot.png', tiff = join(tmpdir(), `ipad-shot-${process.pid}.tiff`);
+  const shot = () => { try { execFileSync('idevicescreenshot', [tiff], { env, stdio: 'ignore' }); return true; } catch { return false; } };
+  if (!shot()) {
+    const ddi = process.env.IPAD_DDI || join(homedir(), '.local/share/ipad-ddi');
+    run('ideviceimagemounter', [join(ddi, 'DeveloperDiskImage.dmg'), join(ddi, 'DeveloperDiskImage.dmg.signature')], { stdio: 'ignore' });
+    if (!shot()) { console.error('Screenshot failed (is the iPad unlocked?)'); process.exit(1); }
+  }
+  run('magick', [tiff, out]); rmSync(tiff); console.log(out); // iOS 8 sends TIFF
 } else if (cmd === 'remove') {
   ssh(`rm -rf ${CLIPS}/${clipId}.webclip && killall -9 SpringBoard`);
   try { execFileSync(pmd, ['profile', 'remove', cfg.id], { env, stdio: 'ignore' }); } catch {} // in case it was installed with --profile
   console.log(`Removed "${label}" from the iPad's home screen.`);
 } else {
-  console.log('Usage: node tools/ipad.mjs open | install [--profile] [URL | --prod] | remove');
+  console.log('Usage: node tools/ipad.mjs open | install [--profile] [URL | --prod] | remove | shot [out.png]');
 }

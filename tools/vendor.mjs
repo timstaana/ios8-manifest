@@ -38,6 +38,7 @@ acorn.parse(out.code, { ecmaVersion: 5 }); // throws if anything newer than ES5 
 
 mkdirSync(root + 'vendor', { recursive: true });
 const shim = readFileSync(root + 'tools/shim-ios8.js', 'utf8');
-writeFileSync(root + 'vendor/polyfills.js', readFileSync(root + 'node_modules/core-js-bundle/minified.js', 'utf8') + '\n' + shim);
+const before = readFileSync(root + 'tools/natives-before.js', 'utf8'); // natives saved before core-js, restored by the shim
+writeFileSync(root + 'vendor/polyfills.js', before + '\n' + readFileSync(root + 'node_modules/core-js-bundle/minified.js', 'utf8') + '\n' + shim);
 writeFileSync(root + 'vendor/p5.js', `/*! p5.js ${version} (LGPL-2.1), rewritten to ES5 for iOS 8 */\n` + out.code);
 console.log(`vendor/p5.js = p5 ${version} (ES5, integrity OK); vendor/polyfills.js = core-js ${JSON.parse(readFileSync(root + 'node_modules/core-js-bundle/package.json')).version} + shims`);

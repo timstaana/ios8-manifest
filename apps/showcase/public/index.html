@@ -7,6 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="status-bar" content="{{STATUS_BAR}}">
 <meta name="apple-mobile-web-app-title" content="{{SHORT_NAME}}">
 <meta name="format-detection" content="telephone=no">
 <link rel="apple-touch-icon" href="icons/icon-152.png">
@@ -28,6 +29,7 @@
 <!-- Order matters: polyfills first (core-js + iOS 8 shims), then p5 (1.x rewritten to ES5), then your app. -->
 <script src="vendor/polyfills.js"></script>
 <script src="vendor/p5.js"></script>
+<script src="vendor/p5-ios8.js"></script>
 </head>
 <body>
 <div id="stage"></div>

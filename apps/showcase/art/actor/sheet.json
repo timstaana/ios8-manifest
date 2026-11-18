@@ -1,0 +1,1 @@
+{ "size": 200, "fps": 8, "clips": { "move": { "fps": 10 }, "react": { "fps": 6, "loop": false, "next": "idle" }, "action": { "fps": 5 } } }

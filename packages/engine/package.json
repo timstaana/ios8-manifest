@@ -1,0 +1,10 @@
+{
+  "name": "@ios8/engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Small modular ECS engine for p5 1.x on iOS 8 Safari (iPad mini 1)",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "sideEffects": false
+}

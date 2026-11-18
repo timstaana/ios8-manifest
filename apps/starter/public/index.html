@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html {{MANIFEST}}>
+<head>
+<meta charset="utf-8">
+<title>{{NAME}}</title>
+<!-- Home-screen web app (iOS 8): opened from the home screen it runs full screen, no Safari bars. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="status-bar" content="{{STATUS_BAR}}">
+<meta name="apple-mobile-web-app-title" content="{{SHORT_NAME}}">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="76x76" href="icons/icon-76.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<!-- Launch screens for the iPad mini 1 (768x1024 at 1x, status bar takes 20 px) -->
+<link rel="apple-touch-startup-image" href="icons/launch-portrait.png" media="(device-width: 768px) and (device-height: 1024px) and (orientation: portrait) and (-webkit-device-pixel-ratio: 1)">
+<link rel="apple-touch-startup-image" href="icons/launch-landscape.png" media="(device-width: 768px) and (device-height: 1024px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 1)">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: {{BG}}; }
+  body { -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: rgba(0,0,0,0); -webkit-text-size-adjust: 100%; font-family: "Helvetica Neue", Helvetica, sans-serif; }
+  #stage { position: fixed; left: 0; top: 0; right: 0; bottom: 0; }
+  #stage canvas { position: absolute; left: 0; top: 0; z-index: 1; display: block; }
+  #stage video { position: absolute; left: 0; top: 0; z-index: 0; }
+  input, textarea { -webkit-user-select: text; font-size: 20px; }
+</style>
+{{DEV}}
+<!-- Order matters: polyfills first (core-js + iOS 8 shims), then p5 (1.x rewritten to ES5), then your app. -->
+<script src="vendor/polyfills.js"></script>
+<script src="vendor/p5.js"></script>
+<script src="vendor/p5-ios8.js"></script>
+</head>
+<body>
+<div id="stage"></div>
+<script src="app.js"></script>
+</body>
+</html>
